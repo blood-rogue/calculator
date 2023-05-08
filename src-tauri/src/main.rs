@@ -7,7 +7,7 @@ use std::num::ParseFloatError;
 
 enum Token {
     Operator(Operator),
-    Number(f64)
+    Number(f64),
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -18,7 +18,7 @@ enum Operator {
     Sub,
     Mul,
     Div,
-    Pow
+    Pow,
 }
 
 impl TryFrom<char> for Operator {
@@ -80,7 +80,7 @@ fn eval(tokens: Vec<Token>) -> f64 {
                     Operator::Pow => stack.push(x.powf(y)),
                     Operator::Div => stack.push(y / x),
                     Operator::Sub => stack.push(y - x),
-                    _ => unreachable!()
+                    _ => unreachable!(),
                 }
             }
         }
@@ -100,7 +100,11 @@ fn parse_and_eval(inp: String) -> Result<f64, String> {
         match Operator::try_from(i) {
             Ok(op) => {
                 if !cur_num.is_empty() {
-                    postfix.push(Token::Number(cur_num.parse().map_err(|err: ParseFloatError| err.to_string())?));
+                    postfix.push(Token::Number(
+                        cur_num
+                            .parse()
+                            .map_err(|err: ParseFloatError| err.to_string())?,
+                    ));
                     cur_num = String::new();
                 }
 
@@ -110,25 +114,33 @@ fn parse_and_eval(inp: String) -> Result<f64, String> {
                     Operator::RPar => {
                         while stack.top() != Operator::LPar {
                             postfix.push(Token::Operator(stack.pop()))
-                        };
+                        }
                         stack.pop();
                     }
 
-                    Operator::Add | Operator::Sub | Operator::Mul | Operator::Div | Operator::Pow => {
+                    Operator::Add
+                    | Operator::Sub
+                    | Operator::Mul
+                    | Operator::Div
+                    | Operator::Pow => {
                         while op.priority() < stack.top().priority() {
                             postfix.push(Token::Operator(stack.pop()))
-                        };
+                        }
                         stack.push(op);
                     }
                 }
             }
 
-            Err(digit) => cur_num.push(digit)
+            Err(digit) => cur_num.push(digit),
         }
     }
 
     if !cur_num.is_empty() {
-        postfix.push(Token::Number(cur_num.parse().map_err(|err: ParseFloatError| err.to_string())?))
+        postfix.push(Token::Number(
+            cur_num
+                .parse()
+                .map_err(|err: ParseFloatError| err.to_string())?,
+        ))
     }
 
     while !stack.0.is_empty() {
